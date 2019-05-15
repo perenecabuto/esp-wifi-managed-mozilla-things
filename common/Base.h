@@ -1,46 +1,32 @@
 #ifndef _base_h
 #define _base_h
 
-#include <Arduino.h>
-
 #if defined(ESP32)
 #include <analogWrite.h>
 #endif
 
 #if defined(ESP8266)
-#include <ESP8266mDNS.h>
+#include <ESP8266WiFi.h>
+#else
+#include <WiFi.h>
 #endif
+
+#include <ESPAsyncWebServer.h>
+#include <ESPAsyncWiFiManager.h>
 
 #include <Thing.h>
 #include <WebThingAdapter.h>
 
 
-const char* ssid = "";
-const char* password = "";
-
-
 void initWifi(String hostname) {
-#if defined(ESP8266) || defined(ESP32)
-  WiFi.mode(WIFI_STA);
-#endif
-  WiFi.begin(ssid, password);
-  Serial.println("");
+  Serial.begin(115200);
+  AsyncWebServer server(80);
+  DNSServer dns;
 
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  if (!MDNS.begin(hostname)) {
-    Serial.println("Error setting up MDNS responder!");
-  }
+  AsyncWiFiManager wifiManager(&server,&dns);
+  char *ssid;
+  hostname.toCharArray(ssid, hostname.length());
+  wifiManager.autoConnect(ssid);
 }
 
 #endif
