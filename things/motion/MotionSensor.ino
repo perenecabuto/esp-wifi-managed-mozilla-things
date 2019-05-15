@@ -1,6 +1,6 @@
 #include "common/Base.h"
 
-#define SENSOR_PIN 4
+#define SENSOR_PIN A0
 
 WebThingAdapter* adapter;
 const char* sensorTypes[] = {"MotionSensor", "Sensor", nullptr};
