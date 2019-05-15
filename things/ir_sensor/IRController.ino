@@ -1,8 +1,12 @@
 #include "common/Base.h"
 
+#if defined(ESP8266)
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include <IRrecv.h>
+#else
+#include <IRRemote.h>
+#endif
 
 #define IR_RX_PIN 5
 #define IR_TX_PIN 4
