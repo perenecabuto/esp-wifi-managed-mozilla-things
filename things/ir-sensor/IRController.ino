@@ -1,4 +1,7 @@
+#define LARGE_JSON_BUFFERS 1
+
 #include "common/Base.h"
+#include "StringSplitter.h"
 
 #if defined(ESP8266)
 #include <IRremoteESP8266.h>
@@ -10,95 +13,120 @@
 
 #define IR_RX_PIN 5
 #define IR_TX_PIN 4
+
 IRrecv irRX(IR_RX_PIN);
 IRsend irTX(IR_TX_PIN);
 
 WebThingAdapter* adapter;
-const char* sensorTypes[] = {"IRController", "Sensor", nullptr};
+const char* sensorTypes[] = {"IRSensor", "OnOffSwitch", nullptr};
 ThingDevice sensor("infrared", "IRSensor", sensorTypes);
-ThingProperty sendProp("send", "BooleanProperty", BOOLEAN, "BooleanProperty");
-ThingProperty codeProp("ir code", "NumberProperty", NUMBER, "NumberProperty");
-ThingProperty bitsProp("ir bits", "NumberProperty", NUMBER, "NumberProperty");
-ThingProperty protoProp("ir protocol", "NumberProperty", NUMBER, "NumberProperty");
+ThingProperty codeProp("code", "code", STRING, "StringProperty");
+ThingProperty replayProp("replay", "replay last code", BOOLEAN, "BooleanProperty");
+
+ThingActionObject *sendActionGenerator(DynamicJsonDocument *);
+StaticJsonDocument<256> sendInputData;
+JsonObject sendInput = sendInputData.to<JsonObject>();
+ThingAction sendAction("send", "Send", "SendCommand", "ToggleAction", &sendInput, sendActionGenerator);
+
+String receivedMsg = "";
 
 void setup() {
-  initWifi(sensor.name);
+  initWifi(sensor.id);
 
-  adapter = new WebThingAdapter("ir-controller", WiFi.localIP());
-  sensor.addProperty(&sendProp);
+  adapter = new WebThingAdapter(sensor.id, WiFi.localIP());
+
+  sendInput["type"] = "object";
+  JsonObject sendInputProperties = sendInput.createNestedObject("properties");
+  sendInputProperties.createNestedObject("code")["type"] = "string";
+  sensor.addAction(&sendAction);
   sensor.addProperty(&codeProp);
-  sensor.addProperty(&bitsProp);
-  sensor.addProperty(&protoProp);
+  sensor.addProperty(&replayProp);
+
   adapter->addDevice(&sensor);
   adapter->begin();
+
+  ThingPropertyValue initialCode = {.string = new String("")};
+  codeProp.setValue(initialCode);
 
   pinMode(IR_TX_PIN, OUTPUT);
   irRX.enableIRIn();
 }
 
+
 void loop() {
   decode_results results;
-  ThingPropertyValue sendVal = sendProp.getValue();
 
-  if (sendVal.boolean) {
-    long code = codeProp.getValue().number;
-    int bits = bitsProp.getValue().number;
-    int protocol = protoProp.getValue().number;
+  adapter->update();
 
-    debugMessage("sending", code, bits, protocol);
-    sendCode(code, bits, protocol);
+  if (replayProp.getValue().boolean) {
+    receivedMsg = *codeProp.getValue().string;
+    ThingPropertyValue replayVal = {.boolean = false};
+    replayProp.setValue(replayVal);
+  }
 
-    sendVal.boolean = false;
-    sendProp.setValue(sendVal);
+  if (receivedMsg != "") {
+    String msg = receivedMsg;
+    receivedMsg = "";
+    Serial.println("Received code:" + msg);
+    StringSplitter *splitter = new StringSplitter(msg, ',', 3);
+    if (splitter->getItemCount() != 3) {
+      Serial.println("invalid code format");
+      return;
+    }
+
+    int protocol = splitter->getItemAtIndex(0).toInt();
+    int bits = splitter->getItemAtIndex(1).toInt();
+    long code = splitter->getItemAtIndex(2).toInt();
+    sendCode(protocol, bits, code);
+    Serial.println("Sent code: " + msg);
   }
   else if (irRX.decode(&results)) {
     long code = results.value;
     int bits = results.bits;
     int protocol = results.decode_type;
 
-    if (isValidMessage(code, bits, protocol)) {
-      debugMessage("received", code, bits, protocol);
+    if (isValidCode(protocol, bits, code)) {
+      char buffer[128];
+      sprintf(buffer, "%d,%d,%ld", protocol, bits, code);
+      Serial.print("Scanned code: ");
+      Serial.println(buffer);
 
-      ThingPropertyValue codeVal;
-      ThingPropertyValue bitsVal;
-      ThingPropertyValue protVal;
-      codeVal.number = code;
-      bitsVal.number = bits;
-      protVal.number = protocol;
+      ThingPropertyValue codeVal = {.string = new String(buffer)};
       codeProp.setValue(codeVal);
-      bitsProp.setValue(bitsVal);
-      protoProp.setValue(protVal);
     }
 
     irRX.resume();
   }
-
-  adapter->update();
-  delay(500);
 }
 
-bool isValidMessage(int code, int bits, int protocol) {
+bool isValidCode(int protocol, int bits, long code) {
   return code != -1 && bits != 0 && protocol != UNKNOWN && protocol != UNUSED;
 }
 
-void sendCode(int code, int bits, int protocol) {
-    switch (protocol) {
-        case NEC: irTX.sendNEC(code, bits); break;
-        case SONY: irTX.sendSony(code, bits); break;
-        case RC5: irTX.sendRC5(code, bits); break;
-        case RC6: irTX.sendRC6(code, bits); break;
-        case DISH: irTX.sendDISH(code, bits); break;
-        case PANASONIC: irTX.sendPanasonic(code, bits); break;
-        case JVC: irTX.sendJVC(code, bits, 5); break;
-        case LG: irTX.sendLG(code, bits, 5); break;
-        case LG2: irTX.sendLG2(code, bits, 5); break;
-    }
+void sendCode(int protocol, int bits, long code) {
+  switch (protocol) {
+    case NEC: irTX.sendNEC(code, bits); break;
+    case SONY: irTX.sendSony(code, bits); break;
+    case RC5: irTX.sendRC5(code, bits); break;
+    case RC6: irTX.sendRC6(code, bits); break;
+    case DISH: irTX.sendDISH(code, bits); break;
+    case PANASONIC: irTX.sendPanasonic(code, bits); break;
+    case JVC: irTX.sendJVC(code, bits, 5); break;
+    case LG: irTX.sendLG(code, bits, 5); break;
+    case LG2: irTX.sendLG2(code, bits, 5); break;
+  }
 }
 
-void debugMessage(String msg, int code, int bits, int protocol) {
-  char format[] = "%s: %ld,%d,%d", buffer[128];
-  char msgChar[msg.length()];
-  msg.toCharArray(msgChar, msg.length());
-  sprintf(buffer, format, msgChar, code, bits, protocol);
-  Serial.println(buffer);
+ThingActionObject *sendActionGenerator(DynamicJsonDocument *input) {
+  return new ThingActionObject("send", input, evalSendCode, nullptr);
+}
+
+void evalSendCode(const JsonVariant &input) {
+  JsonObject inputObj = input.as<JsonObject>();
+  if (!inputObj.containsKey("code")) {
+    Serial.println("no code field found");
+    return;
+  }
+  String code = inputObj["code"];
+  receivedMsg = code;
 }
