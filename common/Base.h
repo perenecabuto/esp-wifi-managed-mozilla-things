@@ -18,15 +18,22 @@
 #include <WebThingAdapter.h>
 
 
-void initWifi(String hostname) {
+void initWifi(String deviceName) {
   Serial.begin(115200);
   AsyncWebServer server(80);
   DNSServer dns;
 
-  AsyncWiFiManager wifiManager(&server,&dns);
+  AsyncWiFiManager wifiManager(&server, &dns);
   char *ssid;
+  String macaddress = WiFi.macAddress();
+  macaddress.replace(":", "");
+  String hostname = deviceName + "_" + macaddress;
   hostname.toCharArray(ssid, hostname.length());
   wifiManager.autoConnect(ssid);
+
+  if (MDNS.begin(hostname)) {
+    Serial.println("MDNS responder started");
+  }
 }
 
 #endif
