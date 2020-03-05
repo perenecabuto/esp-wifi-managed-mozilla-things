@@ -9,7 +9,7 @@ ThingProperty sensorMotion("motion detected", "MotionProperty", BOOLEAN, "Motion
 ThingProperty sensorData("motion data", "LevelProperty", NUMBER, "LevelProperty");
 
 void setup(void) {
-  initWifi(sensor.name);
+  initWifi(sensor.id);
 
   adapter = new WebThingAdapter("motion-sensor", WiFi.localIP());
   sensorMotion.readOnly = true;

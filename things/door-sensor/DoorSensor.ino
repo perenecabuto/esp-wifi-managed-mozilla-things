@@ -8,7 +8,7 @@ ThingDevice sensor("door-sensor", "DoorSensor", sensorTypes);
 ThingProperty sensorMotion("open", "MotionProperty", BOOLEAN, "OpenProperty");
 
 void setup(void) {
-  initWifi(sensor.name);
+  initWifi(sensor.id);
 
   adapter = new WebThingAdapter("door-sensor", WiFi.localIP());
   sensorMotion.readOnly = true;

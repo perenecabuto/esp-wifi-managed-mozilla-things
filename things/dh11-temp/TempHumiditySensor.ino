@@ -16,7 +16,7 @@ ThingProperty sensorTempProp("temperature", "Temperature", NUMBER, "TemperatureP
 ThingProperty sensorHumidityProp("humidity", "Humidity", NUMBER, "HumidityProperty");
 
 void setup(void) {
-  initWifi(sensor.name);
+  initWifi(sensor.id);
 
   adapter = new WebThingAdapter("TemperatureSensor", WiFi.localIP());
   sensorTempProp.readOnly = true;

@@ -11,9 +11,8 @@ ThingProperty triggerValueProp("trigger", "Trigger", BOOLEAN, "TriggerProperty")
 ThingProperty triggerReleaseTimeMsValueProp("triggerReleaseTimeMs", "Milliseconds", NUMBER, "triggerReleaseTimeMsProperty");
 
 
-
 void setup(void) {
-  initWifi(sensor.name);
+  initWifi(sensor.id);
 
   pinMode(TRIGGER_PIN, OUTPUT);
 
