@@ -28,8 +28,8 @@ ThingProperty codeProp("code", "code", STRING, "StringProperty", codeChanged);
 
 StaticJsonDocument<256> sendInputData;
 JsonObject sendInput = sendInputData.to<JsonObject>();
-ThingAction sendAction("send", "Send", "Send code", "ToggleAction", &sendInput, sendActionGenerator);
-ThingAction replayAction("replay", "replay", "Replay last code", "ToggleAction", nullptr, replayActionGenerator);
+ThingAction sendAction("send", "Send code", "Send code", "ToggleAction", &sendInput, sendActionGenerator);
+ThingAction replayAction("replay", "Replay current code value", "Replay code", "ToggleAction", nullptr, replayActionGenerator);
 
 String codeToSend = "";
 
