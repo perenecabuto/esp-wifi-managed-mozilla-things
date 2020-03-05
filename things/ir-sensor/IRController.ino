@@ -20,9 +20,9 @@ IRsend irTX(IR_TX_PIN);
 void codeChanged(ThingPropertyValue newValue);
 
 WebThingAdapter* adapter;
-const char* sensorTypes[] = {"IRSensor", "OnOffSwitch", nullptr};
-ThingDevice sensor("infrared", "IRSensor", sensorTypes);
 ThingProperty replayProp("replay", "replay last code", BOOLEAN, "BooleanProperty");
+const char* sensorTypes[] = {"IRSensor", nullptr};
+ThingDevice sensor("infrared", "IR receiver and emmiter", sensorTypes);
 ThingProperty codeProp("code", "code", STRING, "StringProperty", codeChanged);
 
 ThingActionObject *sendActionGenerator(DynamicJsonDocument *);
