@@ -17,33 +17,34 @@
 IRrecv irRX(IR_RX_PIN);
 IRsend irTX(IR_TX_PIN);
 
+ThingActionObject *sendActionGenerator(DynamicJsonDocument *);
+ThingActionObject *replayActionGenerator(DynamicJsonDocument *);
 void codeChanged(ThingPropertyValue newValue);
 
 WebThingAdapter* adapter;
-ThingProperty replayProp("replay", "replay last code", BOOLEAN, "BooleanProperty");
 const char* sensorTypes[] = {"IRSensor", nullptr};
 ThingDevice sensor("infrared", "IR receiver and emmiter", sensorTypes);
 ThingProperty codeProp("code", "code", STRING, "StringProperty", codeChanged);
 
-ThingActionObject *sendActionGenerator(DynamicJsonDocument *);
 StaticJsonDocument<256> sendInputData;
 JsonObject sendInput = sendInputData.to<JsonObject>();
-ThingAction sendAction("send", "Send", "SendCommand", "ToggleAction", &sendInput, sendActionGenerator);
+ThingAction sendAction("send", "Send", "Send code", "ToggleAction", &sendInput, sendActionGenerator);
+ThingAction replayAction("replay", "replay", "Replay last code", "ToggleAction", nullptr, replayActionGenerator);
 
 String codeToSend = "";
 
 void setup() {
   initWifi(sensor.id);
 
-  adapter = new WebThingAdapter(sensor.id, WiFi.localIP());
+  sensor.addProperty(&codeProp);
 
   sendInput["type"] = "object";
   JsonObject sendInputProperties = sendInput.createNestedObject("properties");
   sendInputProperties.createNestedObject("code")["type"] = "string";
   sensor.addAction(&sendAction);
-  sensor.addProperty(&codeProp);
-  sensor.addProperty(&replayProp);
+  sensor.addAction(&replayAction);
 
+  adapter = new WebThingAdapter(sensor.id, WiFi.localIP());
   adapter->addDevice(&sensor);
   adapter->begin();
 
@@ -127,6 +128,17 @@ void evalSendCode(const JsonVariant &input) {
   }
   String code = inputObj["code"];
   codeToSend = code;
+}
+
+ThingActionObject *replayActionGenerator(DynamicJsonDocument *input) {
+  return new ThingActionObject("replay", input, replayCode, nullptr);
+}
+
+void replayCode(const JsonVariant &input) {
+  String code = *codeProp.getValue().string;
+  if (code != "") {
+    codeToSend = code;
+  }
 }
 
 void codeChanged(ThingPropertyValue newValue) {
