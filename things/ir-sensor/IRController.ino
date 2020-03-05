@@ -28,7 +28,7 @@ StaticJsonDocument<256> sendInputData;
 JsonObject sendInput = sendInputData.to<JsonObject>();
 ThingAction sendAction("send", "Send", "SendCommand", "ToggleAction", &sendInput, sendActionGenerator);
 
-String receivedMsg = "";
+String codeToSend = "";
 
 void setup() {
   initWifi(sensor.id);
@@ -64,9 +64,9 @@ void loop() {
     replayProp.setValue(replayVal);
   }
 
-  if (receivedMsg != "") {
-    String msg = receivedMsg;
-    receivedMsg = "";
+  if (codeToSend != "") {
+    String msg = codeToSend;
+    codeToSend = "";
     Serial.println("Received code:" + msg);
     StringSplitter *splitter = new StringSplitter(msg, ',', 3);
     if (splitter->getItemCount() != 3) {
@@ -128,5 +128,5 @@ void evalSendCode(const JsonVariant &input) {
     return;
   }
   String code = inputObj["code"];
-  receivedMsg = code;
+  codeToSend = code;
 }
