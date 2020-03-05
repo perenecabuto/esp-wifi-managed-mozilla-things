@@ -12,8 +12,8 @@ DHTesp dht;
 WebThingAdapter* adapter;
 const char* sensorTypes[] = {"TemperatureSensor", "MultiLevelSensor", "Sensor", nullptr};
 ThingDevice sensor("TempHumiditySensor", "TempHumiditySensor", sensorTypes);
-ThingProperty sensorTempProp("temperature", "Temperature", NUMBER, "TemperatureProperty");
-ThingProperty sensorHumidityProp("humidity", "Humidity", NUMBER, "HumidityProperty");
+ThingProperty sensorTempProp("temperature", "Temperature", INTEGER, "TemperatureProperty");
+ThingProperty sensorHumidityProp("humidity", "Humidity", INTEGER, "HumidityProperty");
 
 void setup(void) {
   initWifi(sensor.id);
@@ -34,8 +34,8 @@ void setup(void) {
 void loop(void) {
   delay(dht.getMinimumSamplingPeriod());
 
-  float temperature = dht.getTemperature();
-  float humidity = dht.getHumidity();
+  long temperature = dht.getTemperature();
+  long humidity = dht.getHumidity();
 
   Serial.print(dht.getStatusString());
   Serial.print("Humidity: ");
@@ -47,10 +47,10 @@ void loop(void) {
   Serial.print("\n");
 
   ThingPropertyValue tempVal;
-  tempVal.number = temperature;
+  tempVal.integer = temperature;
   sensorTempProp.setValue(tempVal);
   ThingPropertyValue humidityVal;
-  humidityVal.number = humidity;
+  humidityVal.integer = humidity;
   sensorHumidityProp.setValue(humidityVal);
 
   adapter->update();
