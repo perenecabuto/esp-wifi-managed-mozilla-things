@@ -65,11 +65,14 @@ void loop() {
     String msg = codeToSend;
     codeToSend = "";
     Serial.println("Received code:" + msg);
+
     StringSplitter *splitter = new StringSplitter(msg, ',', 3);
     if (splitter->getItemCount() != 3) {
-      ThingPropertyValue initialCode = {.string = new String("")};
-      codeProp.setValue(initialCode);
-      Serial.println("invalid code format");
+      if (msg == *codeProp.getValue().string) {
+        ThingPropertyValue initialCode = {.string = new String("")};
+        codeProp.setValue(initialCode);
+      }
+      Serial.println("Invalid code format");
       return;
     }
 
