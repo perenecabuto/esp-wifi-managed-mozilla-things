@@ -31,9 +31,11 @@ void initWifi(String deviceName) {
   hostname.toCharArray(ssid, hostname.length());
   wifiManager.autoConnect(ssid);
 
+#if defined(ESP8266)
   if (MDNS.begin(hostname)) {
     Serial.println("MDNS responder started");
   }
+#endif
 }
 
 #endif
