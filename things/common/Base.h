@@ -1,6 +1,8 @@
 #ifndef _base_h
 #define _base_h
 
+#define LARGE_JSON_BUFFERS 1
+
 #if defined(ESP32)
 #include <analogWrite.h>
 #endif

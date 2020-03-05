@@ -1,5 +1,3 @@
-#define LARGE_JSON_BUFFERS 1
-
 #include "common/Base.h"
 #include "StringSplitter.h"
 
