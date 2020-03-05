@@ -17,11 +17,13 @@
 IRrecv irRX(IR_RX_PIN);
 IRsend irTX(IR_TX_PIN);
 
+void codeChanged(ThingPropertyValue newValue);
+
 WebThingAdapter* adapter;
 const char* sensorTypes[] = {"IRSensor", "OnOffSwitch", nullptr};
 ThingDevice sensor("infrared", "IRSensor", sensorTypes);
-ThingProperty codeProp("code", "code", STRING, "StringProperty");
 ThingProperty replayProp("replay", "replay last code", BOOLEAN, "BooleanProperty");
+ThingProperty codeProp("code", "code", STRING, "StringProperty", codeChanged);
 
 ThingActionObject *sendActionGenerator(DynamicJsonDocument *);
 StaticJsonDocument<256> sendInputData;
@@ -58,18 +60,14 @@ void loop() {
 
   adapter->update();
 
-  if (replayProp.getValue().boolean) {
-    receivedMsg = *codeProp.getValue().string;
-    ThingPropertyValue replayVal = {.boolean = false};
-    replayProp.setValue(replayVal);
-  }
-
   if (codeToSend != "") {
     String msg = codeToSend;
     codeToSend = "";
     Serial.println("Received code:" + msg);
     StringSplitter *splitter = new StringSplitter(msg, ',', 3);
     if (splitter->getItemCount() != 3) {
+      ThingPropertyValue initialCode = {.string = new String("")};
+      codeProp.setValue(initialCode);
       Serial.println("invalid code format");
       return;
     }
@@ -129,4 +127,8 @@ void evalSendCode(const JsonVariant &input) {
   }
   String code = inputObj["code"];
   codeToSend = code;
+}
+
+void codeChanged(ThingPropertyValue newValue) {
+  codeToSend = *newValue.string;
 }
