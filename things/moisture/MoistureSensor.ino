@@ -33,7 +33,6 @@ unsigned long long triggeredAt = UNDEFINED;
 ThingActionObject *triggerActionGenerator(DynamicJsonDocument *input) {
   int interval = triggerReleaseTimeProp.getValue().integer;
   triggeredAt = millis();
-  Serial.println("");
 }
 
 void changedReleaseTime(ThingPropertyValue newValue) {
@@ -77,11 +76,14 @@ void setup(void) {
 void loop(void) {
   if (triggeredAt != UNDEFINED) {
     digitalWrite(TRIGGER_PIN, HIGH);
+    Serial.println("trigger activated");
+
     int triggerReleaseTime = triggerReleaseTimeProp.getValue().integer;
     int ellapsedTimeSinceTrigger = millis() - triggeredAt;
     if (ellapsedTimeSinceTrigger >= triggerReleaseTime) {
       digitalWrite(TRIGGER_PIN, LOW);
       triggeredAt = UNDEFINED;
+      Serial.println("trigger deactivated");
     }
   }
 
