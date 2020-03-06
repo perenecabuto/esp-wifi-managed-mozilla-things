@@ -57,8 +57,6 @@ void setup() {
 void loop() {
   decode_results results;
 
-  adapter->update();
-
   if (codeToSend != "") {
     String msg = codeToSend;
     codeToSend = "";
@@ -97,6 +95,9 @@ void loop() {
 
     irRX.resume();
   }
+
+  adapter->update();
+  delay(300);
 }
 
 bool isValidCode(int protocol, int bits, long code) {
